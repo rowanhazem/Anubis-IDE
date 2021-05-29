@@ -6,6 +6,7 @@
 import sys
 import glob
 import serial
+from io import StringIO
 
 import Python_Coloring
 from PyQt5 import QtCore
@@ -69,6 +70,7 @@ class Signal(QObject):
 # Making text editor as A global variable (to solve the issue of being local to (self) in widget class)
 text = QTextEdit
 text2 = QTextEdit
+parameters = QLineEdit
 
 #
 #
@@ -175,6 +177,18 @@ class Widget(QWidget):
         # I defined a new splitter to seperate between the upper and lower sides of the window
         V_splitter = QSplitter(Qt.Vertical)
         V_splitter.addWidget(H_splitter)
+		
+		# Adding new label and text area for the parameters of the function
+        paramsLabel = QLabel(self)
+        paramsLabel.setText(
+		"For new defined functions: \nParameters should be separated by a comma ','   i.e ' a,b ' "
+		)
+        V_splitter.addWidget(paramsLabel) 
+		
+        global parameters
+        parameters = QLineEdit(self) 
+        V_splitter.addWidget(parameters)
+	
         V_splitter.addWidget(text2)
 
         Final_Layout = QHBoxLayout(self)
@@ -283,6 +297,7 @@ class UI(QMainWindow):
         RunAction.triggered.connect(self.Run)
         Run.addAction(RunAction)
 
+
         # Making and adding File Features
         Save_Action = QAction("Save", self)
         Save_Action.triggered.connect(self.save)
@@ -312,20 +327,74 @@ class UI(QMainWindow):
         self.show()
 
     ###########################        Start OF the Functions          ##################
+	
+#My modification for the Run function to support built in functions and new defined functions
+#Done by 'Rowan Hazem'
+
     def Run(self):
-        if self.port_flag == 0:
-            mytext = text.toPlainText()
-        #
-        ##### Compiler Part
-        #
-#            ide.create_file(mytext)
-#            ide.upload_file(self.portNo)
-            text2.append("Sorry, there is no attached compiler.")
+        
+#Removed the compiler and port parts
+	#if self.port_flag == 0:
+       #   mytext = text.toPlainText()
+       #
+       ##### Compiler Part
+       #
+       # ide.create_file(mytext)
+       # ide.upload_file(self.portNo)
+	   #text2.append("Sorry, there is no attached compiler.")
+    #else:
+       #text2.append("Please Select Your Port Number First")
+	   
+		   
+        # Clearing the IDE console
+        text2.clear()
+		# Getting the code from the edit text
+        codeText = text.toPlainText()
+        params = parameters.text().split(',')
+		
+		# Getting the function's name and the passed parameters
+        fnStart = codeText.find("def")
+        newText= codeText[fnStart:len(codeText)]
+        fnEnd = newText.find("(") + fnStart
+        fnName = codeText[fnStart + 4: fnEnd + 1]
+		
+        for param in params:
+            fnName += param + ","
+		
+        fnName = fnName[:-1]
+        fnName += ")"
+		
+        try:
 
-        else:
-            text2.append("Please Select Your Port Number First")
+            original = sys.stdout
+            output = StringIO()
+            sys.stdout = output
+			
+			# Handling the case if no defined functions entered by the user
+            if (fnStart == -1):
+              exec(codeText)
+				
+			# Executing the entered code
+            else: 
+              fnLines = codeText.find("\n\n")
+              if(fnStart == 0 and fnLines != -1):
+                codeTextFn = codeText[0:fnLines]
+                codeTextNorm = codeText[fnLines:len(codeText)]
+                code = codeTextFn + "\n" + fnName + "\n" + codeTextNorm
+				
+              else:
+                code = codeText + "\n" + fnName  
+				
+              exec(code)
+              
+            text2.append(output.getvalue())
+            sys.stdout = original
+			
+        except Exception as e:
+            text2.append(str(e))
 
-
+       
+	
     # this function is made to get which port was selected by the user
     @QtCore.pyqtSlot()
     def PortClicked(self):
