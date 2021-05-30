@@ -181,7 +181,7 @@ class Widget(QWidget):
 		# Adding new label and text area for the parameters of the function
         paramsLabel = QLabel(self)
         paramsLabel.setText(
-		"For new defined functions: \nParameters should be separated by a comma ','   i.e ' a,b ' "
+		"For new defined functions: \nParameters should be set here and should be separated by a comma ','   i.e ' a,b ' "
 		)
         V_splitter.addWidget(paramsLabel) 
 		
@@ -331,28 +331,22 @@ class UI(QMainWindow):
 #My modification for the Run function to support built in functions and new defined functions
 #Done by 'Rowan Hazem'
 
-    def Run(self):
-        
-#Removed the compiler and port parts
-	#if self.port_flag == 0:
-       #   mytext = text.toPlainText()
-       #
-       ##### Compiler Part
-       #
-       # ide.create_file(mytext)
-       # ide.upload_file(self.portNo)
-	   #text2.append("Sorry, there is no attached compiler.")
-    #else:
-       #text2.append("Please Select Your Port Number First")
-	   
-		   
-        # Clearing the IDE console
+    def Run(self):        
+#Removed the compiler part	
+      #
+      ##### Compiler Part
+      #
+      # ide.create_file(mytext)
+      # ide.upload_file(self.portNo)
+      #text2.append("Sorry, there is no attached compiler.")
+      
+      if self.port_flag == 0:
         text2.clear()
-		# Getting the code from the edit text
+	# Getting the code from the edit text
         codeText = text.toPlainText()
         params = parameters.text().split(',')
 		
-		# Getting the function's name and the passed parameters
+	# Getting the function's name and the passed parameters
         fnStart = codeText.find("def")
         newText= codeText[fnStart:len(codeText)]
         fnEnd = newText.find("(") + fnStart
@@ -370,11 +364,11 @@ class UI(QMainWindow):
             output = StringIO()
             sys.stdout = output
 			
-			# Handling the case if no defined functions entered by the user
+	    # Handling the case if no defined functions entered by the user
             if (fnStart == -1):
               exec(codeText)
 				
-			# Executing the entered code
+	    # Executing the entered code
             else: 
               fnLines = codeText.find("\n\n")
               if(fnStart == 0 and fnLines != -1):
@@ -393,7 +387,9 @@ class UI(QMainWindow):
         except Exception as e:
             text2.append(str(e))
 
-       
+      else:
+         text2.append("Please Select Your Port Number First")
+		
 	
     # this function is made to get which port was selected by the user
     @QtCore.pyqtSlot()
